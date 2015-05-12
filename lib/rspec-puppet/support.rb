@@ -124,6 +124,7 @@ module RSpec::Puppet
     def setup_puppet
       vardir = Dir.mktmpdir
       Puppet[:vardir] = vardir
+      defaults=Hash.new
 
       if Puppet.version.to_f >= 4.0
         settings = [
@@ -148,13 +149,17 @@ module RSpec::Puppet
         value = self.respond_to?(b) ? self.send(b) : RSpec.configuration.send(b)
         begin
           Puppet[a] = value
+	  defaults[a] = value
         rescue ArgumentError
           Puppet.settings.setdefaults(:main, {a => {:default => value, :desc => a.to_s}})
         end
       end
 
       # This line is wrong. libdir should never be more than a single path
-      Puppet[:libdir] = Dir["#{Puppet[:modulepath]}/*/lib"].entries.join(File::PATH_SEPARATOR)
+      # Puppet[:libdir] = Dir["#{Puppet[:modulepath]}/*/lib"].entries.join(File::PATH_SEPARATOR)
+      defaults[:vardir] = vardir
+      defaults[:logdir] = vardir
+      Puppet.settings.initialize_app_defaults(defaults)
       vardir
     end
 
